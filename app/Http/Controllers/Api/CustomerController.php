@@ -160,4 +160,15 @@ class CustomerController extends Controller
             200,
         );
     }
+
+    public function countCustomers(): JsonResponse
+    {
+        $count = Customer::count();
+
+        return $this->success(
+            ['totalCustomers' => $count],
+            'Customers counted successfully.',
+            200,
+        );
+    }
 }

@@ -17,6 +17,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::controller(AuthController::class)->prefix('v1/users')->group(function () {
         Route::get('list', 'list');
         Route::get('me', 'me');
+        Route::get('list/count', 'countUsers');
         Route::put('update/{email}', 'update');
         Route::delete('delete/{user}', 'destroy');
     });
@@ -26,6 +27,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::controller(CustomerController::class)->prefix('v1/customers')->group(function () {
         Route::get('list', 'index');
         Route::get('{customer}', 'show');
+        Route::get('list/count', 'countCustomers');
         Route::post('create', 'store');
         Route::put('update/{customer}', 'update');
         Route::delete('delete/{customer}', 'destroy');
@@ -36,6 +38,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::controller(ProductController::class)->prefix('v1/products')->group(function () {
         Route::get('list', 'index');
         Route::get('{product}', 'show');
+        Route::get('list/count', 'countProducts');
         Route::post('create', 'store');
         Route::put('update/{product}', 'update');
         Route::delete('delete/{product}', 'destroy');
@@ -46,6 +49,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::controller(OrderController::class)->prefix('v1/orders')->group(function () {
         Route::get('list', 'index');
         Route::get('{order}', 'show');
+        Route::get('list/count', 'countOrders');
         Route::post('create/{customer}', 'store');
         Route::put('update/{order}', 'update');
         Route::delete('delete/{order}', 'destroy');

@@ -175,4 +175,15 @@ class ProductController extends Controller
             200,
         );
     }
+
+    public function countProducts(): JsonResponse
+    {
+        $count = Product::count();
+
+        return $this->success(
+            ['totalProducts' => $count],
+            'Products counted successfully.',
+            200,
+        );
+    }
 }

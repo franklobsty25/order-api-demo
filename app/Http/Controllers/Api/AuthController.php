@@ -179,4 +179,15 @@ class AuthController extends Controller
             200
         );
     }
+
+    public function countUsers(): JsonResponse
+    {
+        $count = User::count();
+
+        return $this->success(
+            ['totalUsers' => $count],
+            'Users counted successfully.',
+            200,
+        );
+    }
 }

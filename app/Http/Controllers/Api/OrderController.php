@@ -7,6 +7,7 @@ use App\Jobs\OrderJob;
 use App\Models\Customer;
 use App\Models\OrderDetail;
 use App\Mail\OrderPurchased;
+use Exception;
 use Illuminate\Http\Request;
 use App\Traits\HttpResponses;
 use Illuminate\Http\JsonResponse;
@@ -167,6 +168,17 @@ class OrderController extends Controller
         return $this->success(
             ['isDeleted' => true],
             'Order deleted successfully.',
+            200,
+        );
+    }
+
+    public function countOrders(): JsonResponse
+    {
+        $count = Order::count();
+
+        return $this->success(
+            ['totalOrders' => $count],
+            'Orders counted successfully.',
             200,
         );
     }
