@@ -38,7 +38,7 @@ class ProductController extends Controller
                 ->orWhere('quantity', 'like', "%$search%")
                 ->orderBy('created_at', 'asc')->paginate();
 
-        if ($all)
+        if ($all == 'true')
             $products = Product::orderByDesc('created_at')->get();
 
         return $this->success(
