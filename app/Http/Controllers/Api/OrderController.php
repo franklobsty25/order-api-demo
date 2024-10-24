@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers\Api;
 
+use Exception;
 use App\Models\order;
 use App\Jobs\OrderJob;
 use App\Models\Customer;
 use App\Models\OrderDetail;
 use App\Mail\OrderPurchased;
-use Exception;
 use Illuminate\Http\Request;
 use App\Traits\HttpResponses;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Mail;
+use App\Http\Resources\OrderResource;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 
@@ -24,7 +26,7 @@ class OrderController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $query = $request->query();
 
@@ -40,14 +42,14 @@ class OrderController extends Controller
             $orders = Order::where('amount', 'like', "%$search%")
                 ->orderBy('created_at', 'asc')->paginate();
 
-        if ($all)
+        if ($all == 'true')
             $orders = Order::orderByDesc('created_at')->get();
 
-        return $this->success(
-            ['orders' => $orders],
-            'Orders retrieved successfully.',
-            200,
-        );
+        foreach ($orders as $order) {
+            $order->customer;
+        }
+
+        return OrderResource::collection($orders);
     }
 
     /**
@@ -107,14 +109,13 @@ class OrderController extends Controller
      */
     public function show(int $order): JsonResponse
     {
-        $order = Cache::remember(
-            'order', now()->addMinutes($this->minutes),
-            function () use ($order) {
-                return Order::findOrFail($order);
-            },
-        );
-        $order->orderDetails;
+        $order = Order::findOrFail($order);
+        $orderDetails = $order->orderDetails;
         $order->customer;
+
+        foreach($orderDetails as $orderDetail) {
+            $orderDetail->product;
+        }
 
         return $this->success(
             ['order' => $order],
@@ -172,13 +173,24 @@ class OrderController extends Controller
         );
     }
 
-    public function countOrders(): JsonResponse
+    public function orderStats(): JsonResponse
     {
-        $count = Order::count();
+        $totalCounts = Order::count();
+
+        $completedOrders = Order::where('status', 'completed')->count();
+
+        $pendingOrders = Order::where('status', 'pending')->count();
+
+        $totalIncome = DB::table('orders')->sum('amount');
 
         return $this->success(
-            ['totalOrders' => $count],
-            'Orders counted successfully.',
+            [
+                'totalOrders' => $totalCounts,
+                'completedOrders' => $completedOrders,
+                'pendingOrders' => $pendingOrders,
+                'totalIncome' => (int) $totalIncome,
+        ],
+            'Orders stats retrieved successfully.',
             200,
         );
     }

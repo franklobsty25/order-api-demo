@@ -143,7 +143,7 @@ class AuthController extends Controller
     }
 
 
-    public function list(Request $request): JsonResponse
+    public function list(Request $request)
     {
         $query = $request->query();
 
@@ -164,11 +164,7 @@ class AuthController extends Controller
         if ($all)
             $users = User::orderByDesc('created_at')->get();
 
-        return $this->success(
-            $users,
-            'Users retrieved successfully.',
-            200
-        );
+        return UserResource::collection($users);
     }
 
     public function me(Request $request): JsonResponse

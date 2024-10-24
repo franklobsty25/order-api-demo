@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Resources\OrderDetailResource;
 use App\Models\orderDetail;
 use Illuminate\Http\Request;
 use App\Traits\HttpResponses;
@@ -19,17 +20,13 @@ class OrderDetailController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): JsonResponse
+    public function index()
     {
 
         $order_details = OrderDetail::orderByDesc('created_at')
             ->paginate($this->limit);
 
-        return $this->success(
-            ['order_details' => $order_details],
-            'Order details retrieved successfully.',
-            200,
-        );
+        return OrderDetailResource::collection($order_details);
     }
 
     /**
@@ -45,12 +42,12 @@ class OrderDetailController extends Controller
      */
     public function show(int $orderDetail): JsonResponse
     {
-        $orderDetail = Cache::remember(
-            'order_detail', now()->addMinutes($this->minutes),
-            function () use ($orderDetail) {
-                return orderDetail::findOrFail($orderDetail);
-            }
-    );
+        if (Cache::has('$orderDetail')) {
+            $orderDetail = Cache::get('$orderDetail');
+        } else {
+            $orderDetail = OrderDetail::findOrFail($orderDetail);
+        }
+
         $orderDetail->order;
         $orderDetail->product;
 

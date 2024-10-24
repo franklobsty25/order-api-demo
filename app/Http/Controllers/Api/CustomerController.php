@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Customer;
+use App\CustomerRepository;
 use Illuminate\Http\Request;
 use App\Traits\HttpResponses;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
+use App\Http\Requests\CustomerRequest;
 use App\Http\Resources\CustomerResource;
 use Illuminate\Support\Facades\Validator;
 
@@ -19,7 +22,7 @@ class CustomerController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $query = $request->query();
 
@@ -37,47 +40,21 @@ class CustomerController extends Controller
                 ->orWhere('email', 'like', "%$search%")
                 ->orderBy('created_at', 'asc')->paginate();
 
-        if ($all)
+        if ($all == 'true')
             $customers = Customer::orderByDesc('created_at')->get();
 
-        return $this->success(
-            ['customers' => $customers],
-            'Customers retrieved successfully.',
-            200,
-        );
+        return CustomerResource::collection($customers);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request): JsonResponse
+    public function store(CustomerRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'firstname' => 'required|string|max:255',
-            'lastname' => 'required|string|max:255',
-            'phonenumber' => 'required|string|min:10|max:13',
-            'email' => ['required', 'string', 'email', 'unique:customers'],
-            'address' => 'string|max:1000',
-        ]);
+        $customerInstance = new CustomerRepository();
+        $customer = $customerInstance->createCustomer($request);
 
-        if ($validator->fails()) {
-            $errors = $validator->errors();
-            return $this->error($errors, 'Invalid input data', 400);
-        }
-
-        $customer = Customer::create([
-            'firstname' => $request->firstname,
-            'lastname' => $request->lastname,
-            'phonenumber' => $request->phonenumber,
-            'email' => $request->email,
-            'address' => $request->address,
-        ]);
-
-        return $this->success(
-            ['customer' => $customer],
-            'Customer created successfully.',
-            201,
-        );
+        return new CustomerResource($customer);
     }
 
     /**
@@ -85,13 +62,7 @@ class CustomerController extends Controller
      */
     public function show(string $customer): JsonResponse
     {
-        $customer = Cache::remember(
-            'customer',
-            now()->addMinutes($this->minutes),
-            function () use ($customer) {
-                return Customer::findOrFail($customer)->first();
-            }
-        );
+        $customer = Customer::findOrFail($customer);
         $customer->orders;
 
         return $this->success(
@@ -161,12 +132,17 @@ class CustomerController extends Controller
         );
     }
 
-    public function countCustomers(): JsonResponse
+    public function customersStats(): JsonResponse
     {
-        $count = Customer::count();
+        $customersCount = Customer::count();
+
+        $customersIncome = DB::table('orders')->sum('amount');
 
         return $this->success(
-            ['totalCustomers' => $count],
+            [
+                'totalCustomers' => $customersCount,
+                'totalRevenues' => (int) $customersIncome,
+            ],
             'Customers counted successfully.',
             200,
         );

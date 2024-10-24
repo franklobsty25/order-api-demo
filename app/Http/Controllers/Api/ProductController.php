@@ -10,6 +10,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
+use App\Http\Resources\ProductResource;
 use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
@@ -20,7 +21,7 @@ class ProductController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $query = $request->query();
 
@@ -41,11 +42,7 @@ class ProductController extends Controller
         if ($all == 'true')
             $products = Product::orderByDesc('created_at')->get();
 
-        return $this->success(
-            ['products' => $products],
-            'Products retrieved successfully.',
-            200,
-        );
+        return ProductResource::collection($products);
     }
 
     /**
@@ -103,12 +100,7 @@ class ProductController extends Controller
      */
     public function show(string $product): JsonResponse
     {
-        $product = Cache::remember(
-            'product', now()->addMinutes($this->minutes),
-            function () use ($product) {
-                return Product::findOrFail($product)->first();
-            }
-    );
+        $product = Product::findOrFail($product);
         $product->orderDetails;
 
         return $this->success(
