@@ -54,7 +54,11 @@ class CustomerController extends Controller
         $customerInstance = new CustomerRepository();
         $customer = $customerInstance->createCustomer($request);
 
-        return new CustomerResource($customer);
+        return $this->success(
+            new CustomerResource($customer),
+            'Customer created successfully.',
+            201,
+        );
     }
 
     /**
